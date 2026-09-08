@@ -6,6 +6,7 @@ export type FoundationState = {
   isTacticalPause: boolean;
   timeScale: number;
   radialMenu: { visible: boolean; x: number; y: number };
+  radialContext: "underground" | "surface";
   scene: "boot" | "main-menu" | "game";
 };
 
@@ -17,6 +18,7 @@ export const FOUNDATION_STATE: FoundationState = {
   isTacticalPause: false,
   timeScale: 1,
   radialMenu: { visible: false, x: 0, y: 0 },
+  radialContext: "underground",
   scene: "game",
 };
 

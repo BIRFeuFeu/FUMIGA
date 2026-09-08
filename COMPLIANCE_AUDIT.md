@@ -19,9 +19,10 @@ Existe uma incompatibilidade estrutural entre o TDD e o ambiente desta sessão. 
 | GDD | Roguelite de colônia com estratégia indireta | Alinhado | O input é indireto e a camada tática não permite arrastar tropas diretamente. |
 | GDD | Plataforma mobile e controle por toque | Parcialmente implementado | Pan, pinch, long press e menu radial funcionam no canvas; Capacitor será tratado na Fase 10. |
 | GDD | Pausa tática em 10% e vinheta | Implementado | `TimeController` usa escala 0.1 e o HUD aplica vinheta e redução de saturação. |
-| GDD | Biomassa in-run e Geleia Real metaprogressiva | Fundamento iniciado | Biomassa inicial e custo de Operária estão ativos; persistência de Geleia Real entra com `SaveManager`. |
+| GDD | Biomassa in-run e Geleia Real metaprogressiva | Biomassa ativo; persistência pendente | Biomassa inicial, custo de Operária, folhas da superfície e retorno da Coletora estão ativos; persistência de Geleia Real entra com `SaveManager`. |
 | GDD | Rainha estática e núcleo da colônia | Implementado como protótipo | A Rainha possui mesh, ovos, fila de spawn e produção de Operárias. Pânico, HP e Game Over entram na camada de combate. |
-| GDD | Operária passiva e restrita ao subterrâneo | Fase 4 iniciada | A Operária recebe uma tarefa de escavação e usa A* sem atravessar sólidos. Behavior Tree será adicionada antes das classes de superfície. |
+| GDD | Operária passiva e restrita ao subterrâneo | Implementado em protótipo | A Operária recebe uma tarefa de escavação e usa A* sem atravessar sólidos. Behavior Tree será adicionada antes das classes de combate. |
+| GDD | Coletoras e feromônio de coleta | Protótipo implementado | A zona contextual é criada na superfície, a Coletora extrai por 1 segundo e retorna à entrada. O custo específico de nascimento será conectado ao menu de produção na evolução da economia. |
 | GDD | Identidade visual 2D pixel art, anatomia realista e sem antropomorfismo | Direção aplicada, assets finais pendentes | A UI segue a direção escura, orgânica e minimalista; spritesheets da Art Bible serão integradas na Fase 9. |
 | TDD | Grid 0/1/2/3 e A* com heurística Manhattan | Implementado | `MapGenerator` expõe a matriz e `AStarGrid` navega apenas em `Dug` e `Room`. |
 | TDD | TimeController com 300 ms e tolerância de 10 px | Implementado | O controlador usa os mesmos limiares e restaura 1.0 ao soltar. |
@@ -29,19 +30,19 @@ Existe uma incompatibilidade estrutural entre o TDD e o ambiente desta sessão. 
 | TDD | Entidades separadas | Implementado em TypeScript | `Queen` e `WorkerAnt` são módulos independentes da cena. |
 | TDD | Phaser, Arcade Physics, JS e Capacitor | Divergência registrada | Babylon/React/TypeScript é a adaptação obrigatória do pipeline WebDev desta sessão; os contratos de gameplay permanecem equivalentes. |
 | Art Bible | Fundo verde para spritesheets, anatomia hexapoda e proibição de humanização | Pendente de assets finais | Nenhum asset final deve ser aceito sem revisão contra essas regras. |
-| Roadmap | Não avançar sem validar A* contra paredes | Critério da Fase 4 | O teste funcional precisa verificar que a Operária não atravessa `Solid` ou `Indestructible`. |
+| Roadmap | Não avançar sem validar A* contra paredes | Validado | O teste funcional verifica que a Operária não atravessa `Solid` ou `Indestructible`; a Fase 5 foi iniciada após essa validação. |
 
 ## Critérios obrigatórios para as próximas fases
 
 Cada nova fase será iniciada somente após a leitura dos quatro documentos e uma comparação com esta auditoria. O Roadmap será usado para decidir a sequência, mas não substituirá os requisitos do GDD, do TDD ou da Art Bible.
 
-A Fase 4 será considerada sólida quando a busca A* retornar caminhos válidos somente em tiles caminháveis, retornar vazio quando não houver rota, e a Operária completar uma escavação sem mover-se através de paredes. A economia deverá impedir spawn sem Biomassa suficiente. A Rainha deverá respeitar a fila e o cooldown de nascimento.
+A Fase 4 foi considerada sólida quando a busca A* retornou caminhos válidos somente em tiles caminháveis, retornou vazio quando não havia rota, e a Operária completou uma escavação sem mover-se através de paredes. A economia impediu spawn sem Biomassa suficiente. A Rainha respeitou a fila e o cooldown de nascimento.
 
 Antes da Fase 5, serão revisados os requisitos de superfície, Coletora, feromônios e economia de Biomassa. Antes da Fase 6, serão revisados HP, armadura, dano, morte, drops e Game Over. Antes da Fase 9, cada asset será comparado com a Art Bible, incluindo anatomia, formato de spritesheet e fundo técnico.
 
 ## Limites conhecidos
 
-A implementação atual ainda não contém persistência IndexedDB, Behavior Trees, PheromoneSystem, RoomBuilder, superfície, combate, MutationSystem, AudioManager, spritesheets finais ou Capacitor. Esses itens não foram considerados concluídos apenas por existirem no planejamento. Eles permanecem explicitamente marcados para as fases correspondentes.
+A implementação atual ainda não contém persistência IndexedDB, Behavior Trees completas, RoomBuilder, combate, MutationSystem, AudioManager, spritesheets finais ou Capacitor. Esses itens não foram considerados concluídos apenas por existirem no planejamento. Eles permanecem explicitamente marcados para as fases correspondentes.
 
 A implementação também não usa o shader de chroma key porque os personagens atuais são meshes procedurais, sem spritesheets com fundo verde. O shader será necessário somente quando o pipeline de arte da Fase 9 for integrado.
 

@@ -1,8 +1,8 @@
 # Fumiga — Plano de desenvolvimento
 
-## Fase atual: 4 — Pathfinding e primeira Operária
+## Fase atual: 5 — Superfície, feromônios e Coletora
 
-A Fase 4 adiciona navegação subterrânea, economia in-run, fila de nascimento da Rainha e a primeira Operária. Esta fase foi iniciada somente após a auditoria do GDD, TDD, Art Bible e Roadmap, registrada em `COMPLIANCE_AUDIT.md`.
+A Fase 5 expande o formigueiro para a superfície. Folhas de Biomassa podem ser marcadas com um feromônio de coleta, e a Coletora segue a zona, extrai por um segundo e retorna à entrada para depositar o recurso.
 
 ### Entregas concluídas
 
@@ -17,6 +17,9 @@ A Fase 4 adiciona navegação subterrânea, economia in-run, fila de nascimento 
 - `EconomyManager` começa com 100 Biomassa, aplica custo de 10 por Operária e impede saldo negativo.
 - `Queen` mantém uma fila de spawn e libera uma Operária após cooldown.
 - `WorkerAnt` recebe uma tarefa, segue a rota A* até a borda do sólido e escava sem atravessar paredes.
+- `SurfaceManager` cria a área de superfície, a entrada do formigueiro, folhas de Biomassa e respawn de recursos.
+- `PheromoneSystem` mantém zonas de coleta com raio, TTL, substituição por tipo e visual de anel discreto.
+- `CollectorAnt` segue o feromônio, extrai por 1 segundo e devolve a carga à Despensa via `EconomyManager`.
 
 ## Critérios de verificação
 
@@ -30,7 +33,9 @@ A Fase 4 adiciona navegação subterrânea, economia in-run, fila de nascimento 
 8. O A* nunca inclui tiles `Solid` ou `Indestructible` em um caminho.
 9. O saldo de Biomassa nunca fica negativo após uma ordem de nascimento.
 10. A Operária só altera um tile sólido ao alcançar uma célula caminhável adjacente.
+11. Um feromônio de coleta tem raio e TTL finitos e não duplica zonas do mesmo tipo.
+12. A Coletora só adiciona Biomassa após retornar à entrada com uma carga colhida.
 
 ## Próximo risco prioritário
 
-A próxima fatia prioritária é a Fase 5: superfície, `PheromoneSystem` e Coletora, após validar a navegação da Operária contra paredes.
+A próxima fatia prioritária é a Fase 6: inimigo básico, Soldado, feromônio de ataque, dano, HP, armadura, drop e Game Over.

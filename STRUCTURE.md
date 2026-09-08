@@ -23,9 +23,12 @@
 - `client/src/game/core/TimeController.ts` -> long press, escala 0.1x e resolução de ordens radiais
 - `client/src/game/ai/AStarGrid.ts` -> caminhos subterrâneos com heurística Manhattan
 - `client/src/game/ai/AStarGrid.test.ts` -> regressões de paredes, isolamento e economia
+- `client/src/game/ai/PheromoneSystem.ts` -> zonas de coleta com raio e TTL
 - `client/src/game/entities/Queen.ts` -> fila e cooldown de nascimento
 - `client/src/game/entities/WorkerAnt.ts` -> execução da tarefa de escavação
+- `client/src/game/entities/CollectorAnt.ts` -> coleta de folhas e retorno à entrada
 - `client/src/game/world/MapGenerator.ts` -> matriz explícita, geração de tiles, consulta de caminhabilidade e escavação
+- `client/src/game/world/SurfaceManager.ts` -> superfície, entrada, folhas e respawn
 - `client/src/game/**` -> regras de gameplay desacopladas da camada React
 
 ## Fundação visual
@@ -35,6 +38,8 @@
 - A Câmara Central é aberta no centro do grid.
 - A câmera aceita arrasto para pan, roda/pinch para zoom e mantém limites para leitura do mapa.
 - A pausa tática é controlada por `TimeController`, que abre o menu radial e não aciona escavação acidental no release.
+- O menu radial identifica o alvo sob o toque e troca a ordem lateral entre spawn de Operária no subterrâneo e feromônio de coleta na superfície.
+- A Coletora não recebe comando direto: consulta uma zona de feromônio ativa, coleta por tempo fixo e retorna à entrada.
 - A Rainha e os ovos são representados por meshes procedurais enquanto o pipeline de arte final ainda não foi integrado.
 - O asset de referência visual é mantido fora do repositório e acessado via `/manus-storage` quando necessário.
 

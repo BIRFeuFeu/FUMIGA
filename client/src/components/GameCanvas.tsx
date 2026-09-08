@@ -10,6 +10,7 @@ type HudState = {
   isTacticalPause: boolean;
   timeScale: number;
   radialMenu: { visible: boolean; x: number; y: number };
+  radialContext: "underground" | "surface";
   scene: "boot" | "main-menu" | "game";
 };
 
@@ -26,6 +27,7 @@ const initialState: HudState = {
   isTacticalPause: false,
   timeScale: 1,
   radialMenu: { visible: false, x: 0, y: 0 },
+  radialContext: "underground",
   scene: "boot",
 };
 
@@ -129,10 +131,10 @@ export default function GameCanvas() {
         </section>
 
         <div className="foundation-badge">
-            <span className="badge-kicker">FASE 4</span>
-            <span className="badge-title">PATHFINDING CORE</span>
+            <span className="badge-kicker">FASE 5</span>
+            <span className="badge-title">SURFACE / PHEROMONES</span>
           <span className="badge-line" />
-            <span className="badge-copy">A* / QUEEN QUEUE / WORKER</span>
+            <span className="badge-copy">BIOMASS / SIGNAL / COLLECTOR</span>
         </div>
 
         {hud.isTacticalPause && (
@@ -145,15 +147,15 @@ export default function GameCanvas() {
         {hud.radialMenu.visible && (
           <div className="radial-menu" style={{ left: hud.radialMenu.x, top: hud.radialMenu.y }} aria-label="Menu radial de ordens">
             <div className="radial-core"><span>ORDENAR</span><small>solte para confirmar</small></div>
-            <div className="radial-option radial-option-top"><b>↑</b><span>CAVAR</span></div>
-            <div className="radial-option radial-option-right"><b>→</b><span>OPERÁRIA</span></div>
+            <div className="radial-option radial-option-top"><b>↑</b><span>{hud.radialContext === "surface" ? "COLETA" : "CAVAR"}</span></div>
+            <div className="radial-option radial-option-right"><b>→</b><span>{hud.radialContext === "surface" ? "FEROMÔNIO" : "OPERÁRIA"}</span></div>
             <div className="radial-option radial-option-bottom"><b>↓</b><span>CANCELAR</span></div>
           </div>
         )}
 
         <div className="interaction-hint">
           <span className="hint-key">SEGURE</span>
-          <span>ABRIR ORDENS TÁTICAS</span>
+          <span>{hud.radialContext === "surface" ? "MARCAR COLETA" : "ABRIR ORDENS TÁTICAS"}</span>
         </div>
 
         <div className={`status-line ${status.tone}`}>
@@ -163,7 +165,7 @@ export default function GameCanvas() {
 
         <footer className="hud-footer">
           <div className="footer-status"><span className="footer-label">CELLS DUG</span><span className="footer-value">{hud.tilesDug.toString().padStart(2, "0")} / 216</span></div>
-          <div className="footer-status footer-right"><span className="footer-label">BUILD</span><span className="footer-value">PATHFINDING CORE // 0.4</span></div>
+          <div className="footer-status footer-right"><span className="footer-label">BUILD</span><span className="footer-value">SURFACE LAYER // 0.5</span></div>
         </footer>
       </div>
     </main>

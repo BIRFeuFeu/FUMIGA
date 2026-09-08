@@ -21,3 +21,11 @@ Os quatro documentos foram revisados novamente antes da implementação: o GDD g
 `AStarGrid` foi mantido independente do renderer e recebe a matriz por função de leitura. Isso permite testar navegação sem iniciar Babylon. A Operária começa na Câmara Central, calcula uma rota em tiles caminháveis, espera 0.8 s na célula adjacente e escava um único alvo. A Rainha cobra 10 Biomassa por pedido e libera a unidade após 2 s.
 
 O TDD prescreve Phaser 3, mas o WebDev disponível para esta sessão prescreve React + Babylon. A divergência foi registrada como adaptação de infraestrutura, não como alteração de design: os módulos, nomes de responsabilidade, regras de A*, economia, fila e contratos previstos no TDD permanecem separados e migráveis.
+
+## 2026-09-08 — Fase 5
+
+A superfície foi criada como um espaço separado do grid subterrâneo, com entrada do formigueiro e cinco folhas de Biomassa. Cada folha fica indisponível após a coleta e reaparece após 7 segundos. A coleta entrega 8 Biomassa antes de respeitar a capacidade do `EconomyManager`.
+
+`PheromoneSystem` mantém zonas de coleta em memória. Uma nova zona do mesmo tipo substitui a anterior, possui raio de 4.6 unidades e TTL de 12 segundos. A zona é visualizada como um anel translúcido, embora a decisão da Coletora continue baseada em dados do sistema.
+
+`CollectorAnt` segue a ordem indireta: procura a folha disponível dentro do feromônio, extrai durante 1 segundo e retorna à entrada. O menu radial usa o contexto do mesh selecionado: no subterrâneo, a ordem lateral continua sendo nascimento de Operária; na superfície, ela cria o feromônio de coleta.

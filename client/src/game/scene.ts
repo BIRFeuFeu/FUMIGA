@@ -2,6 +2,7 @@ import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import { PointerEventTypes, PointerInfo } from "@babylonjs/core/Events/pointerEvents";
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
+import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 import { Scene } from "@babylonjs/core/scene";
 import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
@@ -17,9 +18,12 @@ import { CameraController } from "./core/CameraController";
 import { EconomyManager } from "./core/EconomyManager";
 import { TimeController, type RadialAction, type TacticalPoint } from "./core/TimeController";
 import { AStarGrid } from "./ai/AStarGrid";
+import { PheromoneSystem } from "./ai/PheromoneSystem";
 import { Queen } from "./entities/Queen";
+import { CollectorAnt } from "./entities/CollectorAnt";
 import { WorkerAnt } from "./entities/WorkerAnt";
 import { MapGenerator } from "./world/MapGenerator";
+import { SurfaceManager } from "./world/SurfaceManager";
 
 export type GameHandle = {
   scene: Scene;
@@ -103,22 +107,33 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
   const eggs = createEggs(scene, eggMaterial);
   const economy = new EconomyManager();
   const navigation = new AStarGrid(() => map.getMatrix());
+  const surface = new SurfaceManager(scene);
+  const pheromones = new PheromoneSystem(scene);
   const workers: WorkerAnt[] = [];
+  const collectors: CollectorAnt[] = [];
   const queen = new Queen(scene, map, navigation, economy, (worker) => workers.push(worker), emitFoundationStatus);
+  collectors.push(new CollectorAnt(scene, surface, pheromones, economy, emitFoundationStatus));
 
   let isPaused = false;
   let elapsed = 0;
   let pendingTacticalMesh: AbstractMesh | null = null;
+  let pendingSurface = false;
+  let pendingPheromonePoint = surface.entrance.clone();
   let timeController: TimeController;
 
   const cameraController = new CameraController(canvas, camera, () => !isPaused && !timeController.isTacticalActive);
 
   const onTacticalStart = (point: TacticalPoint) => {
     pendingTacticalMesh = scene.pick(point.x, point.y)?.pickedMesh ?? null;
+    const pickedSurfaceMesh = surface.isSurfaceMesh(pendingTacticalMesh as Mesh | null);
+    const surfaceBand = point.y < canvas.clientHeight * 0.34;
+    pendingSurface = pickedSurfaceMesh || surfaceBand;
+    pendingPheromonePoint = pickedSurfaceMesh ? pendingTacticalMesh?.position.clone() ?? surface.entrance.clone() : surface.entrance.clone();
     emitFoundationState({
       isTacticalPause: true,
       timeScale: 0.1,
       radialMenu: { visible: true, x: point.x, y: point.y },
+      radialContext: pendingSurface ? "surface" : "underground",
     });
     emitFoundationStatus("PAUSA TÁTICA · arraste para uma ordem", "warning");
   };
@@ -128,30 +143,43 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
       isTacticalPause: false,
       timeScale: 1,
       radialMenu: { visible: false, x: 0, y: 0 },
+      radialContext: "underground",
     });
-    if (action === "dig" && map.digMesh(pendingTacticalMesh)) {
+    if (pendingSurface && action === "spawn") {
+      pheromones.place("collection", pendingPheromonePoint);
+      emitFoundationStatus("FEROMÔNIO DE COLETA · Coletora convocada", "success");
+    } else if (!pendingSurface && action === "dig" && map.digMesh(pendingTacticalMesh)) {
       emitFoundationState({ tilesDug: map.walkableCount });
       emitFoundationStatus(`ORDEM CAVAR · ${map.walkableCount.toString().padStart(2, "0")} células abertas`, "success");
-    } else if (action === "spawn") {
+    } else if (!pendingSurface && action === "spawn") {
       queen.requestWorker();
       emitFoundationState({ biomass: economy.biomass });
     } else {
       emitFoundationStatus("ORDEM CANCELADA · mapa preservado", "neutral");
     }
     pendingTacticalMesh = null;
+    pendingSurface = false;
   };
   timeController = new TimeController(canvas, onTacticalStart, onTacticalEnd);
 
   emitFoundationScene("game");
-  emitFoundationState({ tilesDug: map.walkableCount, isPaused: false, isTacticalPause: false, timeScale: 1, radialMenu: { visible: false, x: 0, y: 0 } });
-  emitFoundationStatus("TIME CONTROLLER ONLINE · segure para abrir ordens", "success");
+  emitFoundationState({ tilesDug: map.walkableCount, biomass: economy.biomass, isPaused: false, isTacticalPause: false, timeScale: 1, radialMenu: { visible: false, x: 0, y: 0 }, radialContext: "underground" });
+  emitFoundationStatus("SURFACE ONLINE · segure para marcar coleta", "success");
 
+  let lastBiomass = economy.biomass;
   const onBeforeRender = () => {
     if (isPaused) return;
     const delta = (engine.getDeltaTime() / 1000) * timeController.timeScale;
     elapsed += delta;
     queen.update(delta);
     workers.forEach((worker) => worker.update(delta));
+    surface.update(delta);
+    pheromones.update(delta);
+    collectors.forEach((collector) => collector.update(delta));
+    if (economy.biomass !== lastBiomass) {
+      lastBiomass = economy.biomass;
+      emitFoundationState({ biomass: lastBiomass });
+    }
     eggs.forEach((egg, index) => {
       egg.position.y = 0.19 + Math.sin(elapsed * 1.1 + index) * 0.018;
     });
@@ -190,7 +218,10 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
       timeController.dispose();
       cameraController.dispose();
       workers.forEach((worker) => worker.dispose());
+      collectors.forEach((collector) => collector.dispose());
       queen.dispose();
+      pheromones.dispose();
+      surface.dispose();
       camera.detachControl();
       map.dispose();
       scene.dispose();
