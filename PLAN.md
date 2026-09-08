@@ -1,8 +1,8 @@
 # Fumiga — Plano de desenvolvimento
 
-## Fase atual: 2 — Subterrâneo e matriz de mapa
+## Fase atual: 3 — Câmera e pausa tática
 
-A Fase 2 transforma o grid demonstrativo da fundação em uma matriz explícita, determinística e reutilizável. O mapa agora possui tipos de tile definidos no código e um gerador que é responsável por criar a representação visual e manter a correspondência entre matriz, mesh e input.
+A Fase 3 adiciona a camada de interação mobile sobre a matriz da Fase 2. A câmera pode ser deslocada e aproximada por gestos, enquanto o toque longo reduz a escala temporal para permitir decisões e abre o primeiro menu radial contextual.
 
 ### Entregas concluídas
 
@@ -26,4 +26,4 @@ A Fase 2 transforma o grid demonstrativo da fundação em uma matriz explícita,
 
 ## Próximo risco prioritário
 
-A Fase 3 deve introduzir a câmera com pan/zoom pensado para toque e o `TimeController` com long press, câmera lenta e primeiro menu radial contextual.
+A próxima fatia prioritária é a Fase 4: `AStarGrid`, fila inicial de nascimento da Rainha e uma Operária capaz de executar uma tarefa de escavação sem atravessar tiles sólidos.

@@ -179,3 +179,33 @@ button { font: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
+
+/* Tactical layer */
+.game-shell.is-tactical .game-vignette { background: linear-gradient(180deg, rgba(4, 3, 3, 0.76), rgba(4, 3, 3, 0.2) 35%, rgba(4, 3, 3, 0.72)), radial-gradient(ellipse at center, rgba(126, 88, 31, 0.08), rgba(4, 3, 3, 0.72) 84%); }
+.game-shell.is-tactical .game-canvas { filter: saturate(.72) brightness(.8); }
+
+.tactical-readout { position: absolute; top: 126px; right: clamp(24px, 4.5vw, 72px); display: flex; align-items: center; gap: 10px; padding: 10px 13px; border-right: 2px solid #e2a744; background: rgba(18, 12, 7, .72); color: #f1b650; backdrop-filter: blur(7px); }
+.tactical-icon { font-size: 24px; line-height: 1; animation: tactical-breathe 1.2s ease-in-out infinite; }
+.tactical-readout strong { display: block; font-family: "DM Mono", monospace; font-size: 12px; letter-spacing: .12em; }
+
+.radial-menu { position: absolute; z-index: 4; width: 1px; height: 1px; pointer-events: none; animation: radial-in 180ms cubic-bezier(.23,1,.32,1) both; }
+.radial-menu::before { content: ""; position: absolute; width: 160px; height: 160px; left: -80px; top: -80px; border: 1px solid rgba(241, 171, 71, .6); border-radius: 50%; background: radial-gradient(circle, rgba(241,171,71,.14), rgba(35,20,8,.08) 48%, rgba(35,20,8,.38)); box-shadow: 0 0 30px rgba(241,171,71,.16), inset 0 0 30px rgba(241,171,71,.12); }
+.radial-core { position: absolute; left: -42px; top: -28px; width: 84px; display: grid; justify-items: center; gap: 4px; color: #f7e9d0; font-family: "DM Mono", monospace; font-size: 8px; letter-spacing: .08em; text-align: center; }
+.radial-core small { width: 120px; color: rgba(247,233,208,.46); font-size: 7px; letter-spacing: .04em; }
+.radial-option { position: absolute; display: grid; justify-items: center; gap: 4px; color: rgba(247,233,208,.86); font-family: "DM Mono", monospace; font-size: 9px; letter-spacing: .1em; }
+.radial-option b { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid rgba(241,171,71,.62); color: #f1b650; background: rgba(20,12,6,.78); font-size: 15px; font-weight: 400; }
+.radial-option-top { left: -34px; top: -113px; }
+.radial-option-right { left: 88px; top: -15px; }
+.radial-option-bottom { left: -40px; top: 82px; }
+.radial-option:hover b { background: rgba(241,171,71,.22); }
+
+@keyframes radial-in { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: scale(1); } }
+@keyframes tactical-breathe { 0%, 100% { transform: scale(.86); opacity: .62; } 50% { transform: scale(1); opacity: 1; } }
+
+@media (max-width: 720px) {
+  .tactical-readout { top: 105px; }
+  .radial-menu::before { width: 140px; height: 140px; left: -70px; top: -70px; }
+  .radial-option-top { top: -100px; }
+  .radial-option-right { left: 76px; }
+  .radial-option-bottom { top: 73px; }
+}

@@ -12,6 +12,8 @@ import {
   emitFoundationState,
   emitFoundationStatus,
 } from "./core/GameState";
+import { CameraController } from "./core/CameraController";
+import { TimeController, type RadialAction, type TacticalPoint } from "./core/TimeController";
 import { MapGenerator } from "./world/MapGenerator";
 
 export type GameHandle = {
@@ -107,17 +109,49 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
   const eggs = createEggs(scene, eggMaterial);
   const worker = createWorker(scene, workerMaterial);
 
-  emitFoundationScene("game");
-  emitFoundationState({ tilesDug: map.walkableCount, isPaused: false });
-  emitFoundationStatus("MAP GENERATOR ONLINE · clique em um bloco sólido para escavar", "success");
-
   let isPaused = false;
   let elapsed = 0;
+  let pendingTacticalMesh: ReturnType<typeof scene.pick>["pickedMesh"] = null;
   const initialWorkerPosition = worker.position.clone();
+  let timeController: TimeController;
+
+  const cameraController = new CameraController(canvas, camera, () => !isPaused && !timeController.isTacticalActive);
+
+  const onTacticalStart = (point: TacticalPoint) => {
+    pendingTacticalMesh = scene.pick(point.x, point.y)?.pickedMesh ?? null;
+    emitFoundationState({
+      isTacticalPause: true,
+      timeScale: 0.1,
+      radialMenu: { visible: true, x: point.x, y: point.y },
+    });
+    emitFoundationStatus("PAUSA TÁTICA · arraste para uma ordem", "warning");
+  };
+
+  const onTacticalEnd = (action: RadialAction) => {
+    emitFoundationState({
+      isTacticalPause: false,
+      timeScale: 1,
+      radialMenu: { visible: false, x: 0, y: 0 },
+    });
+    if (action === "dig" && map.digMesh(pendingTacticalMesh)) {
+      emitFoundationState({ tilesDug: map.walkableCount });
+      emitFoundationStatus(`ORDEM CAVAR · ${map.walkableCount.toString().padStart(2, "0")} células abertas`, "success");
+    } else if (action === "build") {
+      emitFoundationStatus("ORDEM CONSTRUIR · salas entram na próxima fatia", "neutral");
+    } else {
+      emitFoundationStatus("ORDEM CANCELADA · mapa preservado", "neutral");
+    }
+    pendingTacticalMesh = null;
+  };
+  timeController = new TimeController(canvas, onTacticalStart, onTacticalEnd);
+
+  emitFoundationScene("game");
+  emitFoundationState({ tilesDug: map.walkableCount, isPaused: false, isTacticalPause: false, timeScale: 1, radialMenu: { visible: false, x: 0, y: 0 } });
+  emitFoundationStatus("TIME CONTROLLER ONLINE · segure para abrir ordens", "success");
 
   const onBeforeRender = () => {
     if (isPaused) return;
-    const delta = engine.getDeltaTime() / 1000;
+    const delta = (engine.getDeltaTime() / 1000) * timeController.timeScale;
     elapsed += delta;
     worker.position.x = initialWorkerPosition.x + Math.sin(elapsed * 0.8) * 0.45;
     worker.position.z = initialWorkerPosition.z + Math.cos(elapsed * 0.8) * 0.22;
@@ -130,7 +164,7 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
   const renderObserver = scene.onBeforeRenderObservable.add(onBeforeRender);
 
   const onPointer = (pointerInfo: PointerInfo) => {
-    if (pointerInfo.type !== PointerEventTypes.POINTERPICK || isPaused) return;
+    if (pointerInfo.type !== PointerEventTypes.POINTERPICK || isPaused || timeController.consumeNextPick()) return;
     if (!map.digMesh(pointerInfo.pickInfo?.pickedMesh)) return;
     emitFoundationState({ tilesDug: map.walkableCount });
     emitFoundationStatus(`TILE ESCAVADO · ${map.walkableCount.toString().padStart(2, "0")} células abertas`, "success");
@@ -138,9 +172,10 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
   const pointerObserver = scene.onPointerObservable.add(onPointer);
 
   const onPauseToggle = () => {
+    if (timeController.isTacticalActive) timeController.cancel();
     isPaused = !isPaused;
     emitFoundationState({ isPaused });
-    emitFoundationStatus(isPaused ? "PAUSA TÁTICA · mapa congelado" : "MAPA RETOMADO · input liberado", isPaused ? "warning" : "success");
+    emitFoundationStatus(isPaused ? "PAUSA TOTAL · mapa congelado" : "MAPA RETOMADO · input liberado", isPaused ? "warning" : "success");
   };
   window.addEventListener("fumiga:pause-toggle", onPauseToggle);
 
@@ -157,6 +192,8 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
       window.removeEventListener("fumiga:scene-change", onSceneChange);
       scene.onBeforeRenderObservable.remove(renderObserver);
       scene.onPointerObservable.remove(pointerObserver);
+      timeController.dispose();
+      cameraController.dispose();
       camera.detachControl();
       map.dispose();
       scene.dispose();

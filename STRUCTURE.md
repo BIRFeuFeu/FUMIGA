@@ -18,6 +18,8 @@
 
 - `client/src/game/scene.ts` -> exporta `createGameScene(engine, canvas)` e `GameHandle`
 - `client/src/game/core/GameState.ts` -> estado mínimo e eventos da fundação
+- `client/src/game/core/CameraController.ts` -> pan, zoom por roda/pinch e limites do alvo
+- `client/src/game/core/TimeController.ts` -> long press, escala 0.1x e resolução de ordens radiais
 - `client/src/game/world/MapGenerator.ts` -> matriz explícita, geração de tiles, consulta de caminhabilidade e escavação
 - `client/src/game/**` -> regras de gameplay desacopladas da camada React
 
@@ -26,6 +28,8 @@
 - `MapGenerator` cria uma matriz determinística de 18 x 12 com tipos `Solid`, `Dug`, `Room` e `Indestructible`.
 - A cena consome o gerador e não muta tiles diretamente.
 - A Câmara Central é aberta no centro do grid.
+- A câmera aceita arrasto para pan, roda/pinch para zoom e mantém limites para leitura do mapa.
+- A pausa tática é controlada por `TimeController`, que abre o menu radial e não aciona escavação acidental no release.
 - A Rainha e os ovos são representados por meshes procedurais enquanto o pipeline de arte final ainda não foi integrado.
 - O asset de referência visual é mantido fora do repositório e acessado via `/manus-storage` quando necessário.
 

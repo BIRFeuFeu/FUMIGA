@@ -3,6 +3,9 @@ export type FoundationState = {
   royalJelly: number;
   tilesDug: number;
   isPaused: boolean;
+  isTacticalPause: boolean;
+  timeScale: number;
+  radialMenu: { visible: boolean; x: number; y: number };
   scene: "boot" | "main-menu" | "game";
 };
 
@@ -11,6 +14,9 @@ export const FOUNDATION_STATE: FoundationState = {
   royalJelly: 0,
   tilesDug: 0,
   isPaused: false,
+  isTacticalPause: false,
+  timeScale: 1,
+  radialMenu: { visible: false, x: 0, y: 0 },
   scene: "game",
 };
 

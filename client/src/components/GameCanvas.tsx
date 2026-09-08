@@ -7,6 +7,9 @@ type HudState = {
   royalJelly: number;
   tilesDug: number;
   isPaused: boolean;
+  isTacticalPause: boolean;
+  timeScale: number;
+  radialMenu: { visible: boolean; x: number; y: number };
   scene: "boot" | "main-menu" | "game";
 };
 
@@ -18,8 +21,11 @@ type StatusState = {
 const initialState: HudState = {
   biomass: 100,
   royalJelly: 0,
-  tilesDug: 0,
+  tilesDug: 72,
   isPaused: false,
+  isTacticalPause: false,
+  timeScale: 1,
+  radialMenu: { visible: false, x: 0, y: 0 },
   scene: "boot",
 };
 
@@ -35,14 +41,8 @@ export default function GameCanvas() {
   const [status, setStatus] = useState<StatusState>(initialStatus);
 
   useEffect(() => {
-    const onState = (event: Event) => {
-      const customEvent = event as CustomEvent<HudState>;
-      setHud(customEvent.detail);
-    };
-    const onStatus = (event: Event) => {
-      const customEvent = event as CustomEvent<StatusState>;
-      setStatus(customEvent.detail);
-    };
+    const onState = (event: Event) => setHud((event as CustomEvent<HudState>).detail);
+    const onStatus = (event: Event) => setStatus((event as CustomEvent<StatusState>).detail);
     window.addEventListener("fumiga:state", onState);
     window.addEventListener("fumiga:status", onStatus);
     return () => {
@@ -75,7 +75,6 @@ export default function GameCanvas() {
 
     const onResize = () => engine.resize();
     window.addEventListener("resize", onResize);
-
     return () => {
       disposed = true;
       window.removeEventListener("resize", onResize);
@@ -85,8 +84,10 @@ export default function GameCanvas() {
     };
   }, []);
 
+  const tacticalLabel = hud.timeScale < 1 ? "SLOW / 10%" : "REALTIME";
+
   return (
-    <main className="game-shell">
+    <main className={`game-shell ${hud.isTacticalPause ? "is-tactical" : ""}`}>
       <canvas ref={canvasRef} className="game-canvas" style={{ touchAction: "none" }} />
       <div className="game-vignette" aria-hidden="true" />
 
@@ -101,7 +102,7 @@ export default function GameCanvas() {
           </div>
           <div className="scene-readout">
             <span className="pulse-dot" />
-            <span>{hud.scene === "game" ? "NUCLEUS ONLINE" : hud.scene.toUpperCase()}</span>
+            <span>{hud.isTacticalPause ? "TACTICAL PAUSE" : hud.scene === "game" ? "NUCLEUS ONLINE" : hud.scene.toUpperCase()}</span>
           </div>
           <button
             type="button"
@@ -117,32 +118,42 @@ export default function GameCanvas() {
         <section className="hud-resource-stack" aria-label="Recursos da colônia">
           <div className="resource-card biomass-card">
             <span className="resource-glyph">◆</span>
-            <div>
-              <span className="resource-label">BIOMASSA</span>
-              <strong>{hud.biomass.toString().padStart(3, "0")}</strong>
-            </div>
+            <div><span className="resource-label">BIOMASSA</span><strong>{hud.biomass.toString().padStart(3, "0")}</strong></div>
             <span className="resource-suffix">RUN</span>
           </div>
           <div className="resource-card jelly-card">
             <span className="resource-glyph">◈</span>
-            <div>
-              <span className="resource-label">GELEIA REAL</span>
-              <strong>{hud.royalJelly.toString().padStart(3, "0")}</strong>
-            </div>
+            <div><span className="resource-label">GELEIA REAL</span><strong>{hud.royalJelly.toString().padStart(3, "0")}</strong></div>
             <span className="resource-suffix">META</span>
           </div>
         </section>
 
         <div className="foundation-badge">
-          <span className="badge-kicker">FASE 2</span>
-          <span className="badge-title">MAP GENERATOR</span>
+          <span className="badge-kicker">FASE 3</span>
+          <span className="badge-title">TACTICAL LAYER</span>
           <span className="badge-line" />
-          <span className="badge-copy">MATRIX / TILES / DIGGING</span>
+          <span className="badge-copy">PAN / ZOOM / LONG PRESS</span>
         </div>
 
+        {hud.isTacticalPause && (
+          <div className="tactical-readout">
+            <span className="tactical-icon">◌</span>
+            <div><span className="resource-label">TACTICAL TIME</span><strong>{tacticalLabel}</strong></div>
+          </div>
+        )}
+
+        {hud.radialMenu.visible && (
+          <div className="radial-menu" style={{ left: hud.radialMenu.x, top: hud.radialMenu.y }} aria-label="Menu radial de ordens">
+            <div className="radial-core"><span>ORDENAR</span><small>solte para confirmar</small></div>
+            <div className="radial-option radial-option-top"><b>↑</b><span>CAVAR</span></div>
+            <div className="radial-option radial-option-right"><b>→</b><span>CONSTRUIR</span></div>
+            <div className="radial-option radial-option-bottom"><b>↓</b><span>CANCELAR</span></div>
+          </div>
+        )}
+
         <div className="interaction-hint">
-          <span className="hint-key">CLICK</span>
-          <span>ABRIR UMA CÉLULA DE TERRA</span>
+          <span className="hint-key">SEGURE</span>
+          <span>ABRIR ORDENS TÁTICAS</span>
         </div>
 
         <div className={`status-line ${status.tone}`}>
@@ -151,14 +162,8 @@ export default function GameCanvas() {
         </div>
 
         <footer className="hud-footer">
-          <div className="footer-status">
-            <span className="footer-label">CELLS DUG</span>
-            <span className="footer-value">{hud.tilesDug.toString().padStart(2, "0")} / 216</span>
-          </div>
-          <div className="footer-status footer-right">
-            <span className="footer-label">BUILD</span>
-            <span className="footer-value">MAP GENERATOR // 0.2</span>
-          </div>
+          <div className="footer-status"><span className="footer-label">CELLS DUG</span><span className="footer-value">{hud.tilesDug.toString().padStart(2, "0")} / 216</span></div>
+          <div className="footer-status footer-right"><span className="footer-label">BUILD</span><span className="footer-value">TACTICAL LAYER // 0.3</span></div>
         </footer>
       </div>
     </main>
