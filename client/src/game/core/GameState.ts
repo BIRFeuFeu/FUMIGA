@@ -1,18 +1,24 @@
 export type FoundationState = {
   biomass: number;
   royalJelly: number;
+  queenHp: number;
+  queenMaxHp: number;
+  gameOver: boolean;
   tilesDug: number;
   isPaused: boolean;
   isTacticalPause: boolean;
   timeScale: number;
   radialMenu: { visible: boolean; x: number; y: number };
-  radialContext: "underground" | "surface";
+  radialContext: "underground" | "surface" | "attack";
   scene: "boot" | "main-menu" | "game";
 };
 
 export const FOUNDATION_STATE: FoundationState = {
   biomass: 100,
   royalJelly: 0,
+  queenHp: 100,
+  queenMaxHp: 100,
+  gameOver: false,
   tilesDug: 0,
   isPaused: false,
   isTacticalPause: false,

@@ -209,3 +209,26 @@ button { font: inherit; }
   .radial-option-right { left: 76px; }
   .radial-option-bottom { top: 73px; }
 }
+
+
+/* Phase 6 combat layer */
+.queen-card .resource-glyph { color: #ff7354; }
+.game-over-panel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  gap: 0.65rem;
+  min-width: min(420px, calc(100vw - 3rem));
+  padding: 2rem 2.4rem;
+  border: 1px solid rgba(255, 92, 62, 0.58);
+  background: rgba(25, 5, 4, 0.9);
+  box-shadow: 0 0 60px rgba(190, 38, 22, 0.24);
+  text-align: center;
+  color: #ffe7dc;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.game-over-panel strong { font-size: clamp(1.35rem, 3vw, 2.6rem); letter-spacing: 0.2em; }
+.game-over-panel > span:last-child { color: rgba(255, 210, 192, 0.72); font-size: 0.68rem; }

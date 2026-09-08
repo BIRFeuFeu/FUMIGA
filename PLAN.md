@@ -1,8 +1,8 @@
 # Fumiga — Plano de desenvolvimento
 
-## Fase atual: 5 — Superfície, feromônios e Coletora
+## Fase atual: 6 — Combate básico, inimigos e Soldado
 
-A Fase 5 expande o formigueiro para a superfície. Folhas de Biomassa podem ser marcadas com um feromônio de coleta, e a Coletora segue a zona, extrai por um segundo e retorna à entrada para depositar o recurso.
+A Fase 6 introduz a primeira ameaça de superfície. Uma Centopeia vaga pelo terreno, o Soldado permanece na entrada até receber uma ordem indireta de ataque, e a Rainha possui HP, armadura e condição de Game Over.
 
 ### Entregas concluídas
 
@@ -20,6 +20,9 @@ A Fase 5 expande o formigueiro para a superfície. Folhas de Biomassa podem ser 
 - `SurfaceManager` cria a área de superfície, a entrada do formigueiro, folhas de Biomassa e respawn de recursos.
 - `PheromoneSystem` mantém zonas de coleta com raio, TTL, substituição por tipo e visual de anel discreto.
 - `CollectorAnt` segue o feromônio, extrai por 1 segundo e devolve a carga à Despensa via `EconomyManager`.
+- `CombatMath` resolve dano mitigado por armadura, HP mínimo e derrota.
+- `EnemyBase` cria a Centopeia, movimenta-a pela superfície, causa dano à Rainha e dropa 12 Biomassa ao morrer.
+- `SoldierAnt` custa 25 Biomassa, aguarda o feromônio de ataque, persegue a ameaça e aplica mordidas de 14 de dano.
 
 ## Critérios de verificação
 
@@ -35,7 +38,10 @@ A Fase 5 expande o formigueiro para a superfície. Folhas de Biomassa podem ser 
 10. A Operária só altera um tile sólido ao alcançar uma célula caminhável adjacente.
 11. Um feromônio de coleta tem raio e TTL finitos e não duplica zonas do mesmo tipo.
 12. A Coletora só adiciona Biomassa após retornar à entrada com uma carga colhida.
+13. Dano respeita armadura e nunca reduz HP abaixo de zero.
+14. Soldado só abandona a prontidão após um feromônio de ataque ativo.
+15. Centopeia derrotada desaparece e concede Biomassa; Rainha derrotada ativa Game Over.
 
 ## Próximo risco prioritário
 
-A próxima fatia prioritária é a Fase 6: inimigo básico, Soldado, feromônio de ataque, dano, HP, armadura, drop e Game Over.
+A próxima fatia prioritária é a Fase 7: RoomBuilder, salas construídas e cartas de mutação.

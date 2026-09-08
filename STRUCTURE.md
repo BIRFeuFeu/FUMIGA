@@ -20,6 +20,8 @@
 - `client/src/game/core/GameState.ts` -> estado mínimo e eventos da fundação
 - `client/src/game/core/CameraController.ts` -> pan, zoom por roda/pinch e limites do alvo
 - `client/src/game/core/EconomyManager.ts` -> Biomassa e custo de nascimento
+- `client/src/game/core/CombatMath.ts` -> dano, armadura e HP
+- `client/src/game/core/CombatMath.test.ts` -> regressões de mitigação e derrota
 - `client/src/game/core/TimeController.ts` -> long press, escala 0.1x e resolução de ordens radiais
 - `client/src/game/ai/AStarGrid.ts` -> caminhos subterrâneos com heurística Manhattan
 - `client/src/game/ai/AStarGrid.test.ts` -> regressões de paredes, isolamento e economia
@@ -27,6 +29,8 @@
 - `client/src/game/entities/Queen.ts` -> fila e cooldown de nascimento
 - `client/src/game/entities/WorkerAnt.ts` -> execução da tarefa de escavação
 - `client/src/game/entities/CollectorAnt.ts` -> coleta de folhas e retorno à entrada
+- `client/src/game/entities/EnemyBase.ts` -> Centopeia, movimento, ataque à Rainha e drop
+- `client/src/game/entities/SoldierAnt.ts` -> prontidão, feromônio de ataque e mordida
 - `client/src/game/world/MapGenerator.ts` -> matriz explícita, geração de tiles, consulta de caminhabilidade e escavação
 - `client/src/game/world/SurfaceManager.ts` -> superfície, entrada, folhas e respawn
 - `client/src/game/**` -> regras de gameplay desacopladas da camada React
@@ -40,6 +44,9 @@
 - A pausa tática é controlada por `TimeController`, que abre o menu radial e não aciona escavação acidental no release.
 - O menu radial identifica o alvo sob o toque e troca a ordem lateral entre spawn de Operária no subterrâneo e feromônio de coleta na superfície.
 - A Coletora não recebe comando direto: consulta uma zona de feromônio ativa, coleta por tempo fixo e retorna à entrada.
+- O Soldado também não recebe controle direto: permanece na entrada e só seleciona inimigos dentro da zona `attack` ativa.
+- A Centopeia não é destruída por proximidade; ela só entra em combate quando a ordem de ataque está ativa, preservando a estratégia indireta.
+- A Rainha mantém `CombatStats`, recebe dano mitigado por armadura e emite `gameOver` quando seu HP chega a zero.
 - A Rainha e os ovos são representados por meshes procedurais enquanto o pipeline de arte final ainda não foi integrado.
 - O asset de referência visual é mantido fora do repositório e acessado via `/manus-storage` quando necessário.
 

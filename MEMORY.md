@@ -29,3 +29,11 @@ A superfície foi criada como um espaço separado do grid subterrâneo, com entr
 `PheromoneSystem` mantém zonas de coleta em memória. Uma nova zona do mesmo tipo substitui a anterior, possui raio de 4.6 unidades e TTL de 12 segundos. A zona é visualizada como um anel translúcido, embora a decisão da Coletora continue baseada em dados do sistema.
 
 `CollectorAnt` segue a ordem indireta: procura a folha disponível dentro do feromônio, extrai durante 1 segundo e retorna à entrada. O menu radial usa o contexto do mesh selecionado: no subterrâneo, a ordem lateral continua sendo nascimento de Operária; na superfície, ela cria o feromônio de coleta.
+
+## 2026-09-08 — Fase 6
+
+O combate inicial mantém a filosofia de estratégia indireta. `EnemyBase` cria uma Centopeia vermelha que vaga apenas na área da superfície e pode atingir a Rainha quando chega ao raio de ataque. Ela não é destruída automaticamente pela presença de um Soldado: o Soldado só seleciona e persegue o inimigo quando `PheromoneSystem` possui uma zona `attack` ativa.
+
+O menu radial usa a faixa superior da superfície para a ordem de ataque com arrasto para cima; a ordem lateral continua sendo coleta. Ao emitir ataque, a zona recebe raio 6 e TTL 12 segundos. `SoldierAnt` começa com custo de 25 Biomassa e, nesta fatia demonstrável, uma unidade é criada em prontidão para que o ciclo possa ser testado imediatamente.
+
+`CombatMath` aplica mitigação `dano × 100 / (100 + armadura)`, arredonda o resultado e garante dano mínimo 1. A Centopeia possui 40 HP e armadura 5, o Soldado aplica 14 de dano por mordida, e a Rainha possui 100 HP e armadura 10. A derrota da Centopeia deposita 12 Biomassa; a derrota da Rainha interrompe o update e exibe Game Over.

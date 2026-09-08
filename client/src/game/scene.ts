@@ -21,6 +21,8 @@ import { AStarGrid } from "./ai/AStarGrid";
 import { PheromoneSystem } from "./ai/PheromoneSystem";
 import { Queen } from "./entities/Queen";
 import { CollectorAnt } from "./entities/CollectorAnt";
+import { EnemyBase } from "./entities/EnemyBase";
+import { SoldierAnt } from "./entities/SoldierAnt";
 import { WorkerAnt } from "./entities/WorkerAnt";
 import { MapGenerator } from "./world/MapGenerator";
 import { SurfaceManager } from "./world/SurfaceManager";
@@ -111,13 +113,34 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
   const pheromones = new PheromoneSystem(scene);
   const workers: WorkerAnt[] = [];
   const collectors: CollectorAnt[] = [];
-  const queen = new Queen(scene, map, navigation, economy, (worker) => workers.push(worker), emitFoundationStatus);
+  const soldiers: SoldierAnt[] = [];
+  const enemies: EnemyBase[] = [];
+  let gameOver = false;
+  const queen = new Queen(
+    scene,
+    map,
+    navigation,
+    economy,
+    (worker) => workers.push(worker),
+    emitFoundationStatus,
+    () => {
+      gameOver = true;
+      emitFoundationState({ gameOver: true, queenHp: 0 });
+    },
+  );
   collectors.push(new CollectorAnt(scene, surface, pheromones, economy, emitFoundationStatus));
+  enemies.push(new EnemyBase(scene, economy, (damage) => {
+    const result = queen.takeDamage(damage);
+    emitFoundationState({ queenHp: queen.stats.hp, gameOver: result.defeated });
+  }, emitFoundationStatus, new Vector3(-2.8, 0, 9.6)));
+  const initialSoldier = SoldierAnt.tryCreate(scene, surface.entrance, pheromones, economy, emitFoundationStatus);
+  if (initialSoldier) soldiers.push(initialSoldier);
 
   let isPaused = false;
   let elapsed = 0;
   let pendingTacticalMesh: AbstractMesh | null = null;
   let pendingSurface = false;
+  let pendingAttack = false;
   let pendingPheromonePoint = surface.entrance.clone();
   let timeController: TimeController;
 
@@ -126,14 +149,16 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
   const onTacticalStart = (point: TacticalPoint) => {
     pendingTacticalMesh = scene.pick(point.x, point.y)?.pickedMesh ?? null;
     const pickedSurfaceMesh = surface.isSurfaceMesh(pendingTacticalMesh as Mesh | null);
+    const pickedEnemy = enemies.find((enemy) => enemy.mesh === pendingTacticalMesh);
     const surfaceBand = point.y < canvas.clientHeight * 0.34;
-    pendingSurface = pickedSurfaceMesh || surfaceBand;
-    pendingPheromonePoint = pickedSurfaceMesh ? pendingTacticalMesh?.position.clone() ?? surface.entrance.clone() : surface.entrance.clone();
+    pendingAttack = Boolean(pickedEnemy);
+    pendingSurface = !pendingAttack && (pickedSurfaceMesh || surfaceBand);
+    pendingPheromonePoint = pickedEnemy?.mesh.position.clone() ?? (pickedSurfaceMesh ? pendingTacticalMesh?.position.clone() ?? surface.entrance.clone() : surface.entrance.clone());
     emitFoundationState({
       isTacticalPause: true,
       timeScale: 0.1,
       radialMenu: { visible: true, x: point.x, y: point.y },
-      radialContext: pendingSurface ? "surface" : "underground",
+      radialContext: pendingAttack ? "attack" : pendingSurface ? "surface" : "underground",
     });
     emitFoundationStatus("PAUSA TÁTICA · arraste para uma ordem", "warning");
   };
@@ -145,7 +170,13 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
       radialMenu: { visible: false, x: 0, y: 0 },
       radialContext: "underground",
     });
-    if (pendingSurface && action === "spawn") {
+    if ((pendingAttack || pendingSurface) && action === "dig") {
+      pheromones.place("attack", pendingPheromonePoint, 6, 12);
+      emitFoundationStatus("FEROMÔNIO DE ATAQUE · Soldado avançando", "warning");
+    } else if (pendingAttack && action === "spawn") {
+      pheromones.place("attack", pendingPheromonePoint, 6, 12);
+      emitFoundationStatus("FEROMÔNIO DE ATAQUE · Soldado avançando", "warning");
+    } else if (pendingSurface && action === "spawn") {
       pheromones.place("collection", pendingPheromonePoint);
       emitFoundationStatus("FEROMÔNIO DE COLETA · Coletora convocada", "success");
     } else if (!pendingSurface && action === "dig" && map.digMesh(pendingTacticalMesh)) {
@@ -159,23 +190,27 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
     }
     pendingTacticalMesh = null;
     pendingSurface = false;
+    pendingAttack = false;
   };
   timeController = new TimeController(canvas, onTacticalStart, onTacticalEnd);
 
   emitFoundationScene("game");
-  emitFoundationState({ tilesDug: map.walkableCount, biomass: economy.biomass, isPaused: false, isTacticalPause: false, timeScale: 1, radialMenu: { visible: false, x: 0, y: 0 }, radialContext: "underground" });
-  emitFoundationStatus("SURFACE ONLINE · segure para marcar coleta", "success");
+  emitFoundationState({ tilesDug: map.walkableCount, biomass: economy.biomass, queenHp: queen.stats.hp, queenMaxHp: queen.stats.maxHp, gameOver: false, isPaused: false, isTacticalPause: false, timeScale: 1, radialMenu: { visible: false, x: 0, y: 0 }, radialContext: "underground" });
+  emitFoundationStatus("COMBAT ONLINE · ataque indireto aguardando", "success");
 
   let lastBiomass = economy.biomass;
   const onBeforeRender = () => {
     if (isPaused) return;
     const delta = (engine.getDeltaTime() / 1000) * timeController.timeScale;
     elapsed += delta;
+    if (gameOver) return;
     queen.update(delta);
     workers.forEach((worker) => worker.update(delta));
     surface.update(delta);
     pheromones.update(delta);
     collectors.forEach((collector) => collector.update(delta));
+    soldiers.forEach((soldier) => soldier.update(delta, enemies));
+    enemies.forEach((enemy) => enemy.update(delta, queen.mesh.position));
     if (economy.biomass !== lastBiomass) {
       lastBiomass = economy.biomass;
       emitFoundationState({ biomass: lastBiomass });
@@ -219,6 +254,8 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
       cameraController.dispose();
       workers.forEach((worker) => worker.dispose());
       collectors.forEach((collector) => collector.dispose());
+      soldiers.forEach((soldier) => soldier.dispose());
+      enemies.forEach((enemy) => enemy.dispose());
       queen.dispose();
       pheromones.dispose();
       surface.dispose();

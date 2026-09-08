@@ -5,6 +5,7 @@ import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { AStarGrid } from "../ai/AStarGrid";
 import { EconomyManager } from "../core/EconomyManager";
+import { applyDamage, type CombatStats } from "../core/CombatMath";
 import { MapGenerator } from "../world/MapGenerator";
 import { WorkerAnt, type DigTask } from "./WorkerAnt";
 
@@ -13,6 +14,7 @@ const SPAWN_COOLDOWN = 2;
 
 export class Queen {
   readonly mesh;
+  readonly stats: CombatStats = { hp: 100, maxHp: 100, armor: 10, damage: 0 };
   private readonly spawnQueue: Array<"worker"> = [];
   private spawnTimer = 0;
 
@@ -23,6 +25,7 @@ export class Queen {
     private readonly economy: EconomyManager,
     private readonly onWorkerSpawned: (worker: WorkerAnt) => void,
     private readonly onStatus: (message: string, tone: "neutral" | "success" | "warning") => void,
+    private readonly onGameOver: () => void,
   ) {
     const material = new StandardMaterial("queen-chitin", scene);
     material.diffuseColor = new Color3(0.22, 0.075, 0.045);
@@ -73,6 +76,17 @@ export class Queen {
     }
     const worker = new WorkerAnt(this.scene, this.map, this.navigation, task, this.onStatus);
     this.onWorkerSpawned(worker);
+  }
+
+  takeDamage(rawDamage: number) {
+    const result = applyDamage(this.stats, rawDamage);
+    if (result.defeated) {
+      this.onStatus("GAME OVER · a Rainha foi eliminada", "warning");
+      this.onGameOver();
+    } else {
+      this.onStatus(`RAINHA · ${this.stats.hp.toString().padStart(3, "0")} HP restante`, "warning");
+    }
+    return result;
   }
 
   dispose() {

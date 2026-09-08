@@ -5,12 +5,15 @@ import { createGameScene, type GameHandle } from "@/game/scene";
 type HudState = {
   biomass: number;
   royalJelly: number;
+  queenHp: number;
+  queenMaxHp: number;
+  gameOver: boolean;
   tilesDug: number;
   isPaused: boolean;
   isTacticalPause: boolean;
   timeScale: number;
   radialMenu: { visible: boolean; x: number; y: number };
-  radialContext: "underground" | "surface";
+  radialContext: "underground" | "surface" | "attack";
   scene: "boot" | "main-menu" | "game";
 };
 
@@ -22,6 +25,9 @@ type StatusState = {
 const initialState: HudState = {
   biomass: 100,
   royalJelly: 0,
+  queenHp: 100,
+  queenMaxHp: 100,
+  gameOver: false,
   tilesDug: 72,
   isPaused: false,
   isTacticalPause: false,
@@ -128,13 +134,18 @@ export default function GameCanvas() {
             <div><span className="resource-label">GELEIA REAL</span><strong>{hud.royalJelly.toString().padStart(3, "0")}</strong></div>
             <span className="resource-suffix">META</span>
           </div>
+          <div className="resource-card queen-card">
+            <span className="resource-glyph">♥</span>
+            <div><span className="resource-label">RAINHA HP</span><strong>{hud.queenHp.toString().padStart(3, "0")}</strong></div>
+            <span className="resource-suffix">CORE</span>
+          </div>
         </section>
 
         <div className="foundation-badge">
-            <span className="badge-kicker">FASE 5</span>
-            <span className="badge-title">SURFACE / PHEROMONES</span>
+            <span className="badge-kicker">FASE 6</span>
+            <span className="badge-title">COMBAT / ATTACK SIGNAL</span>
           <span className="badge-line" />
-            <span className="badge-copy">BIOMASS / SIGNAL / COLLECTOR</span>
+            <span className="badge-copy">CENTIPEDE / SOLDIER / HP</span>
         </div>
 
         {hud.isTacticalPause && (
@@ -147,9 +158,17 @@ export default function GameCanvas() {
         {hud.radialMenu.visible && (
           <div className="radial-menu" style={{ left: hud.radialMenu.x, top: hud.radialMenu.y }} aria-label="Menu radial de ordens">
             <div className="radial-core"><span>ORDENAR</span><small>solte para confirmar</small></div>
-            <div className="radial-option radial-option-top"><b>↑</b><span>{hud.radialContext === "surface" ? "COLETA" : "CAVAR"}</span></div>
-            <div className="radial-option radial-option-right"><b>→</b><span>{hud.radialContext === "surface" ? "FEROMÔNIO" : "OPERÁRIA"}</span></div>
+            <div className="radial-option radial-option-top"><b>↑</b><span>{hud.radialContext === "surface" ? "ATAQUE" : hud.radialContext === "attack" ? "ATAQUE" : "CAVAR"}</span></div>
+            <div className="radial-option radial-option-right"><b>→</b><span>{hud.radialContext === "surface" ? "COLETA" : hud.radialContext === "attack" ? "ATAQUE" : "OPERÁRIA"}</span></div>
             <div className="radial-option radial-option-bottom"><b>↓</b><span>CANCELAR</span></div>
+          </div>
+        )}
+
+        {hud.gameOver && (
+          <div className="game-over-panel" role="alert">
+            <span className="badge-kicker">COLONY FAILURE</span>
+            <strong>A RAINHA CAIU</strong>
+            <span>O núcleo da colônia foi perdido.</span>
           </div>
         )}
 
@@ -165,7 +184,7 @@ export default function GameCanvas() {
 
         <footer className="hud-footer">
           <div className="footer-status"><span className="footer-label">CELLS DUG</span><span className="footer-value">{hud.tilesDug.toString().padStart(2, "0")} / 216</span></div>
-          <div className="footer-status footer-right"><span className="footer-label">BUILD</span><span className="footer-value">SURFACE LAYER // 0.5</span></div>
+          <div className="footer-status footer-right"><span className="footer-label">BUILD</span><span className="footer-value">COMBAT LAYER // 0.6</span></div>
         </footer>
       </div>
     </main>
