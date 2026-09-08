@@ -1,30 +1,29 @@
 # Fumiga — Plano de desenvolvimento
 
-## Fase atual: 1 — Fundação e setup
+## Fase atual: 2 — Subterrâneo e matriz de mapa
 
-A Fase 1 entrega uma base executável no navegador, com o ciclo de vida do canvas protegido contra o duplo mount do React StrictMode, uma cena Babylon inicializada e uma superfície mínima de HUD para confirmar que o runtime está vivo.
+A Fase 2 transforma o grid demonstrativo da fundação em uma matriz explícita, determinística e reutilizável. O mapa agora possui tipos de tile definidos no código e um gerador que é responsável por criar a representação visual e manter a correspondência entre matriz, mesh e input.
 
 ### Entregas concluídas
 
-- Scaffold WebDev `web-static` com React 19, TypeScript e Vite.
-- Babylon.js adicionado como dependência.
-- Canvas de tela cheia montado como conteúdo exclusivo da rota principal.
-- Cena de fundação subterrânea criada com câmera, iluminação, tiles e marcador da Rainha.
-- Input de clique conectado ao grid para validar o primeiro handshake de interação.
-- Botão de pausa conectado ao runtime da cena.
-- HUD mínimo com Biomassa, Geleia Real, estado do núcleo e contagem de células abertas.
-- Arquivos de contexto do pipeline criados para permitir retomada sem perda de decisões.
+- Fase 1 mantida: canvas, lifecycle Babylon, Câmara Central, Rainha, HUD e pausa.
+- `TileType` explícito: `Solid = 0`, `Dug = 1`, `Room = 2` e `Indestructible = 3`.
+- `INITIAL_MAP` 18 x 12 com túneis iniciais, Câmara Central e áreas de terra sólida.
+- `MapGenerator` responsável por clonar a matriz, gerar meshes, converter grid para mundo, consultar tiles e contar células caminháveis.
+- Escavação centralizada em `MapGenerator.digMesh`, sem mutação de mapa espalhada pela cena.
+- Metadados de cada mesh vinculados às coordenadas `x`, `z` e ao tipo do tile.
+- Tiles escavados passam a ser visualmente baixos e caminháveis, mantendo a atualização do HUD.
 
 ## Critérios de verificação
 
 1. `pnpm check` termina sem erros de TypeScript.
 2. `pnpm build` gera o build de produção.
-3. O preview abre sem erros fatais de runtime.
-4. A cena exibe o subterrâneo, a Câmara Central e a Rainha.
-5. Clicar em um bloco sólido o transforma em célula escavada e atualiza o HUD.
-6. Pausar e retomar interrompe e reinicia a animação da cena.
-7. O canvas é descartado corretamente no unmount.
+3. A matriz possui dimensões estáveis de 18 x 12.
+4. A Câmara Central é representada por tiles `Room` e os túneis iniciais por tiles `Dug`.
+5. Tiles sólidos podem ser escavados uma única vez, atualizando a matriz e a representação visual.
+6. A câmera mantém a leitura top-down sem bloquear a interação com os tiles.
+7. A cena continua descartando observers, câmera, mapa e materiais no unmount.
 
 ## Próximo risco prioritário
 
-A Fase 2 deve substituir a demonstração visual por um `MapGenerator` e uma matriz de tiles explícita, além de introduzir câmera móvel com pan/zoom controlado para mobile.
+A Fase 3 deve introduzir a câmera com pan/zoom pensado para toque e o `TimeController` com long press, câmera lenta e primeiro menu radial contextual.

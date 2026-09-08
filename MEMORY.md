@@ -1,11 +1,9 @@
 # Fumiga — Memória de desenvolvimento
 
-## 2026-09-08 — Fase 1
+## 2026-09-08 — Fase 2
 
-A sessão possui um pipeline WebDev baseado em React + Babylon.js, enquanto o TDD original descreve Phaser 3 + JavaScript vanilla. A decisão adotada é preservar os limites de responsabilidade e os nomes conceituais do TDD, mas usar Babylon como camada de renderização compatível com o ambiente atual. O gameplay permanece em módulos TypeScript sob `client/src/game/` e não depende de componentes React.
+A matriz do subterrâneo foi separada da cena em `client/src/game/world/MapGenerator.ts`. O módulo é a fonte de verdade do grid e expõe tipos de tile, consulta de caminhabilidade, conversão de coordenadas, contagem de células e escavação por mesh.
 
-A integração do canvas segue o contrato de lifecycle: um Engine por mount, guarda contra StrictMode, `engine.resize()` em resize, remoção de listeners e `dispose()` no unmount.
+A matriz inicial é determinística e usa uma cópia defensiva da constante `INITIAL_MAP`. Isso evita que uma partida altere o template global e prepara o terreno para geração procedural e rotas futuras. O tipo `Indestructible` já está definido para que pedras e restrições de navegação não precisem ser introduzidas por refatoração posterior.
 
-A Fase 1 ainda não tenta resolver A*, behavior trees, economia real, feromônios ou persistência. O objetivo é garantir que a cena, o canvas e o primeiro input estejam vivos antes de avançar.
-
-O asset visual gerado para orientar a direção de arte usa pixel art 16-bit moderno, subterrâneo úmido, âmbar bioluminescente, verde orgânico e formigas anatomicamente realistas. O arquivo não deve ser commitado no projeto por causa do tamanho; seu registro está em `ASSETS.md`.
+A cena agora se limita a coordenar câmera, luz, entidades temporárias, input e eventos do HUD. Ela não constrói nem muta tiles diretamente.

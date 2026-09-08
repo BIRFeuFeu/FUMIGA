@@ -134,10 +134,10 @@ export default function GameCanvas() {
         </section>
 
         <div className="foundation-badge">
-          <span className="badge-kicker">FASE 1</span>
-          <span className="badge-title">FUNDAÇÃO</span>
+          <span className="badge-kicker">FASE 2</span>
+          <span className="badge-title">MAP GENERATOR</span>
           <span className="badge-line" />
-          <span className="badge-copy">SCENE / INPUT / LIFECYCLE</span>
+          <span className="badge-copy">MATRIX / TILES / DIGGING</span>
         </div>
 
         <div className="interaction-hint">
@@ -157,7 +157,7 @@ export default function GameCanvas() {
           </div>
           <div className="footer-status footer-right">
             <span className="footer-label">BUILD</span>
-            <span className="footer-value">FOUNDATION // 0.1</span>
+            <span className="footer-value">MAP GENERATOR // 0.2</span>
           </div>
         </footer>
       </div>

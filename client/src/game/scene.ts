@@ -1,8 +1,8 @@
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
+import { PointerEventTypes, PointerInfo } from "@babylonjs/core/Events/pointerEvents";
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
-import { PointerEventTypes, PointerInfo } from "@babylonjs/core/Events/pointerEvents";
 import { Scene } from "@babylonjs/core/scene";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
@@ -11,44 +11,19 @@ import {
   emitFoundationScene,
   emitFoundationState,
   emitFoundationStatus,
-  getFoundationState,
 } from "./core/GameState";
+import { MapGenerator } from "./world/MapGenerator";
 
 export type GameHandle = {
   scene: Scene;
   dispose: () => void;
 };
 
-type TileMetadata = {
-  tile: true;
-  x: number;
-  z: number;
-  dug: boolean;
-};
-
-const GRID_WIDTH = 18;
-const GRID_HEIGHT = 12;
-const TILE_SIZE = 1;
-
-function tilePosition(x: number, z: number) {
-  return new Vector3(
-    (x - GRID_WIDTH / 2 + 0.5) * TILE_SIZE,
-    0,
-    (z - GRID_HEIGHT / 2 + 0.5) * TILE_SIZE,
-  );
-}
-
-function isCentralChamber(x: number, z: number) {
-  return x >= 7 && x <= 10 && z >= 4 && z <= 7;
-}
-
 function makeMaterial(scene: Scene, name: string, color: Color3, emissive?: Color3) {
   const material = new StandardMaterial(name, scene);
   material.diffuseColor = color;
   material.specularColor = Color3.Black();
-  if (emissive) {
-    material.emissiveColor = emissive;
-  }
+  if (emissive) material.emissiveColor = emissive;
   return material;
 }
 
@@ -68,19 +43,14 @@ function createQueen(scene: Scene, material: StandardMaterial) {
   head.parent = root;
   head.position = new Vector3(0, 0.02, -1.08);
   head.material = material;
-
   return root;
 }
 
 function createEggs(scene: Scene, material: StandardMaterial) {
   const eggs: ReturnType<typeof MeshBuilder.CreateSphere>[] = [];
   const positions = [
-    [-1.35, 0.19, -0.85],
-    [-1.08, 0.19, -0.48],
-    [-1.42, 0.19, -0.18],
-    [1.25, 0.19, -0.72],
-    [1.42, 0.19, -0.35],
-    [1.18, 0.19, 0.02],
+    [-1.35, 0.19, -0.85], [-1.08, 0.19, -0.48], [-1.42, 0.19, -0.18],
+    [1.25, 0.19, -0.72], [1.42, 0.19, -0.35], [1.18, 0.19, 0.02],
   ];
   positions.forEach(([x, y, z], index) => {
     const egg = MeshBuilder.CreateSphere(`egg-${index}`, { diameter: 0.28, segments: 8 }, scene);
@@ -129,55 +99,17 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
   fill.intensity = 0.16;
   fill.diffuse = new Color3(0.4, 0.8, 0.28);
 
-  const solidMaterial = makeMaterial(scene, "solid-earth", new Color3(0.075, 0.058, 0.05));
-  const dugMaterial = makeMaterial(scene, "dug-earth", new Color3(0.23, 0.145, 0.095));
-  const chamberMaterial = makeMaterial(scene, "central-chamber", new Color3(0.33, 0.19, 0.105));
-  const queenMaterial = makeMaterial(
-    scene,
-    "queen-chitin",
-    new Color3(0.22, 0.075, 0.045),
-    new Color3(0.16, 0.035, 0.015),
-  );
-  const eggMaterial = makeMaterial(
-    scene,
-    "queen-eggs",
-    new Color3(0.85, 0.68, 0.38),
-    new Color3(0.42, 0.2, 0.05),
-  );
-  const workerMaterial = makeMaterial(
-    scene,
-    "worker-chitin",
-    new Color3(0.43, 0.21, 0.08),
-    new Color3(0.12, 0.055, 0.015),
-  );
-
-  const tiles = new Map<string, ReturnType<typeof MeshBuilder.CreateBox>>();
-  let dugTiles = 0;
-
-  for (let z = 0; z < GRID_HEIGHT; z += 1) {
-    for (let x = 0; x < GRID_WIDTH; x += 1) {
-      const dug = isCentralChamber(x, z);
-      const tile = MeshBuilder.CreateBox(`tile-${x}-${z}`, {
-        width: TILE_SIZE * 0.96,
-        depth: TILE_SIZE * 0.96,
-        height: dug ? 0.12 : 0.64,
-      }, scene);
-      const position = tilePosition(x, z);
-      tile.position = new Vector3(position.x, dug ? 0.06 : 0.32, position.z);
-      tile.material = dug ? chamberMaterial : solidMaterial;
-      tile.metadata = { tile: true, x, z, dug } satisfies TileMetadata;
-      tiles.set(`${x}:${z}`, tile);
-      if (dug) dugTiles += 1;
-    }
-  }
-
+  const map = new MapGenerator(scene);
+  const queenMaterial = makeMaterial(scene, "queen-chitin", new Color3(0.22, 0.075, 0.045), new Color3(0.16, 0.035, 0.015));
+  const eggMaterial = makeMaterial(scene, "queen-eggs", new Color3(0.85, 0.68, 0.38), new Color3(0.42, 0.2, 0.05));
+  const workerMaterial = makeMaterial(scene, "worker-chitin", new Color3(0.43, 0.21, 0.08), new Color3(0.12, 0.055, 0.015));
   const queen = createQueen(scene, queenMaterial);
   const eggs = createEggs(scene, eggMaterial);
   const worker = createWorker(scene, workerMaterial);
-  const state = getFoundationState();
+
   emitFoundationScene("game");
-  emitFoundationState({ tilesDug: dugTiles, isPaused: false });
-  emitFoundationStatus("NÚCLEO ONLINE · clique em um bloco sólido para testar o input", "success");
+  emitFoundationState({ tilesDug: map.walkableCount, isPaused: false });
+  emitFoundationStatus("MAP GENERATOR ONLINE · clique em um bloco sólido para escavar", "success");
 
   let isPaused = false;
   let elapsed = 0;
@@ -199,26 +131,16 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
 
   const onPointer = (pointerInfo: PointerInfo) => {
     if (pointerInfo.type !== PointerEventTypes.POINTERPICK || isPaused) return;
-    const mesh = pointerInfo.pickInfo?.pickedMesh;
-    const metadata = mesh?.metadata;
-    if (!metadata?.tile || metadata.dug) return;
-
-    metadata.dug = true;
-    if (mesh) {
-      mesh.material = dugMaterial;
-      mesh.scaling.y = 0.18;
-      mesh.position.y = 0.08;
-    }
-    dugTiles += 1;
-    emitFoundationState({ tilesDug: dugTiles });
-    emitFoundationStatus(`TILE ESCAVADO · ${dugTiles.toString().padStart(2, "0")} células abertas`, "success");
+    if (!map.digMesh(pointerInfo.pickInfo?.pickedMesh)) return;
+    emitFoundationState({ tilesDug: map.walkableCount });
+    emitFoundationStatus(`TILE ESCAVADO · ${map.walkableCount.toString().padStart(2, "0")} células abertas`, "success");
   };
   const pointerObserver = scene.onPointerObservable.add(onPointer);
 
   const onPauseToggle = () => {
     isPaused = !isPaused;
     emitFoundationState({ isPaused });
-    emitFoundationStatus(isPaused ? "PAUSA TÁTICA · fundação congelada" : "NÚCLEO RETOMADO · input liberado", isPaused ? "warning" : "success");
+    emitFoundationStatus(isPaused ? "PAUSA TÁTICA · mapa congelado" : "MAPA RETOMADO · input liberado", isPaused ? "warning" : "success");
   };
   window.addEventListener("fumiga:pause-toggle", onPauseToggle);
 
@@ -236,6 +158,7 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
       scene.onBeforeRenderObservable.remove(renderObserver);
       scene.onPointerObservable.remove(pointerObserver);
       camera.detachControl();
+      map.dispose();
       scene.dispose();
     },
   };

@@ -18,11 +18,13 @@
 
 - `client/src/game/scene.ts` -> exporta `createGameScene(engine, canvas)` e `GameHandle`
 - `client/src/game/core/GameState.ts` -> estado mínimo e eventos da fundação
+- `client/src/game/world/MapGenerator.ts` -> matriz explícita, geração de tiles, consulta de caminhabilidade e escavação
 - `client/src/game/**` -> regras de gameplay desacopladas da camada React
 
 ## Fundação visual
 
-- A cena cria uma matriz temporária de tiles de terra sólida e células escavadas.
+- `MapGenerator` cria uma matriz determinística de 18 x 12 com tipos `Solid`, `Dug`, `Room` e `Indestructible`.
+- A cena consome o gerador e não muta tiles diretamente.
 - A Câmara Central é aberta no centro do grid.
 - A Rainha e os ovos são representados por meshes procedurais enquanto o pipeline de arte final ainda não foi integrado.
 - O asset de referência visual é mantido fora do repositório e acessado via `/manus-storage` quando necessário.
