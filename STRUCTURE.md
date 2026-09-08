@@ -19,7 +19,12 @@
 - `client/src/game/scene.ts` -> exporta `createGameScene(engine, canvas)` e `GameHandle`
 - `client/src/game/core/GameState.ts` -> estado mínimo e eventos da fundação
 - `client/src/game/core/CameraController.ts` -> pan, zoom por roda/pinch e limites do alvo
+- `client/src/game/core/EconomyManager.ts` -> Biomassa e custo de nascimento
 - `client/src/game/core/TimeController.ts` -> long press, escala 0.1x e resolução de ordens radiais
+- `client/src/game/ai/AStarGrid.ts` -> caminhos subterrâneos com heurística Manhattan
+- `client/src/game/ai/AStarGrid.test.ts` -> regressões de paredes, isolamento e economia
+- `client/src/game/entities/Queen.ts` -> fila e cooldown de nascimento
+- `client/src/game/entities/WorkerAnt.ts` -> execução da tarefa de escavação
 - `client/src/game/world/MapGenerator.ts` -> matriz explícita, geração de tiles, consulta de caminhabilidade e escavação
 - `client/src/game/**` -> regras de gameplay desacopladas da camada React
 

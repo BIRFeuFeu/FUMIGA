@@ -1,8 +1,8 @@
 # Fumiga — Plano de desenvolvimento
 
-## Fase atual: 3 — Câmera e pausa tática
+## Fase atual: 4 — Pathfinding e primeira Operária
 
-A Fase 3 adiciona a camada de interação mobile sobre a matriz da Fase 2. A câmera pode ser deslocada e aproximada por gestos, enquanto o toque longo reduz a escala temporal para permitir decisões e abre o primeiro menu radial contextual.
+A Fase 4 adiciona navegação subterrânea, economia in-run, fila de nascimento da Rainha e a primeira Operária. Esta fase foi iniciada somente após a auditoria do GDD, TDD, Art Bible e Roadmap, registrada em `COMPLIANCE_AUDIT.md`.
 
 ### Entregas concluídas
 
@@ -13,6 +13,10 @@ A Fase 3 adiciona a camada de interação mobile sobre a matriz da Fase 2. A câ
 - Escavação centralizada em `MapGenerator.digMesh`, sem mutação de mapa espalhada pela cena.
 - Metadados de cada mesh vinculados às coordenadas `x`, `z` e ao tipo do tile.
 - Tiles escavados passam a ser visualmente baixos e caminháveis, mantendo a atualização do HUD.
+- `AStarGrid` calcula rotas com custo G e heurística Manhattan, aceitando apenas tiles `Dug` e `Room`.
+- `EconomyManager` começa com 100 Biomassa, aplica custo de 10 por Operária e impede saldo negativo.
+- `Queen` mantém uma fila de spawn e libera uma Operária após cooldown.
+- `WorkerAnt` recebe uma tarefa, segue a rota A* até a borda do sólido e escava sem atravessar paredes.
 
 ## Critérios de verificação
 
@@ -23,7 +27,10 @@ A Fase 3 adiciona a camada de interação mobile sobre a matriz da Fase 2. A câ
 5. Tiles sólidos podem ser escavados uma única vez, atualizando a matriz e a representação visual.
 6. A câmera mantém a leitura top-down sem bloquear a interação com os tiles.
 7. A cena continua descartando observers, câmera, mapa e materiais no unmount.
+8. O A* nunca inclui tiles `Solid` ou `Indestructible` em um caminho.
+9. O saldo de Biomassa nunca fica negativo após uma ordem de nascimento.
+10. A Operária só altera um tile sólido ao alcançar uma célula caminhável adjacente.
 
 ## Próximo risco prioritário
 
-A próxima fatia prioritária é a Fase 4: `AStarGrid`, fila inicial de nascimento da Rainha e uma Operária capaz de executar uma tarefa de escavação sem atravessar tiles sólidos.
+A próxima fatia prioritária é a Fase 5: superfície, `PheromoneSystem` e Coletora, após validar a navegação da Operária contra paredes.

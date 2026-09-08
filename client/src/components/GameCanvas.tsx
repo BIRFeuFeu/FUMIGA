@@ -129,10 +129,10 @@ export default function GameCanvas() {
         </section>
 
         <div className="foundation-badge">
-          <span className="badge-kicker">FASE 3</span>
-          <span className="badge-title">TACTICAL LAYER</span>
+            <span className="badge-kicker">FASE 4</span>
+            <span className="badge-title">PATHFINDING CORE</span>
           <span className="badge-line" />
-          <span className="badge-copy">PAN / ZOOM / LONG PRESS</span>
+            <span className="badge-copy">A* / QUEEN QUEUE / WORKER</span>
         </div>
 
         {hud.isTacticalPause && (
@@ -146,7 +146,7 @@ export default function GameCanvas() {
           <div className="radial-menu" style={{ left: hud.radialMenu.x, top: hud.radialMenu.y }} aria-label="Menu radial de ordens">
             <div className="radial-core"><span>ORDENAR</span><small>solte para confirmar</small></div>
             <div className="radial-option radial-option-top"><b>↑</b><span>CAVAR</span></div>
-            <div className="radial-option radial-option-right"><b>→</b><span>CONSTRUIR</span></div>
+            <div className="radial-option radial-option-right"><b>→</b><span>OPERÁRIA</span></div>
             <div className="radial-option radial-option-bottom"><b>↓</b><span>CANCELAR</span></div>
           </div>
         )}
@@ -163,7 +163,7 @@ export default function GameCanvas() {
 
         <footer className="hud-footer">
           <div className="footer-status"><span className="footer-label">CELLS DUG</span><span className="footer-value">{hud.tilesDug.toString().padStart(2, "0")} / 216</span></div>
-          <div className="footer-status footer-right"><span className="footer-label">BUILD</span><span className="footer-value">TACTICAL LAYER // 0.3</span></div>
+          <div className="footer-status footer-right"><span className="footer-label">BUILD</span><span className="footer-value">PATHFINDING CORE // 0.4</span></div>
         </footer>
       </div>
     </main>

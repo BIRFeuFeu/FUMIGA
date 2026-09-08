@@ -88,6 +88,30 @@ export class MapGenerator {
     return this.matrix[z]?.[x];
   }
 
+  findDigTask(startX: number, startZ: number) {
+    const directions = [
+      { dx: 0, dz: -1 },
+      { dx: 1, dz: 0 },
+      { dx: 0, dz: 1 },
+      { dx: -1, dz: 0 },
+    ];
+    for (let radius = 1; radius < Math.max(this.width, this.height); radius += 1) {
+      for (let z = Math.max(0, startZ - radius); z <= Math.min(this.height - 1, startZ + radius); z += 1) {
+        for (let x = Math.max(0, startX - radius); x <= Math.min(this.width - 1, startX + radius); x += 1) {
+          if (!this.isWalkable(x, z)) continue;
+          const solidDirection = directions.find(({ dx, dz }) => this.getTile(x + dx, z + dz) === TileType.Solid);
+          if (!solidDirection) continue;
+          return {
+            start: { x: startX, z: startZ },
+            approach: { x, z },
+            target: { x: x + solidDirection.dx, z: z + solidDirection.dz },
+          };
+        }
+      }
+    }
+    return undefined;
+  }
+
   isWalkable(x: number, z: number) {
     const type = this.getTile(x, z);
     return type === TileType.Dug || type === TileType.Room;
@@ -115,6 +139,19 @@ export class MapGenerator {
     const tile = this.tiles.get(this.key(record.x, record.z));
     if (!tile) return false;
 
+    tile.type = TileType.Dug;
+    tile.mesh.material = this.dugMaterial;
+    tile.mesh.scaling.y = 0.18;
+    tile.mesh.position.y = 0.08;
+    tile.mesh.metadata = { ...tile.mesh.metadata, type: TileType.Dug } satisfies TileMetadata;
+    return true;
+  }
+
+  digAt(x: number, z: number) {
+    if (this.getTile(x, z) !== TileType.Solid) return false;
+    this.matrix[z][x] = TileType.Dug;
+    const tile = this.tiles.get(this.key(x, z));
+    if (!tile) return false;
     tile.type = TileType.Dug;
     tile.mesh.material = this.dugMaterial;
     tile.mesh.scaling.y = 0.18;

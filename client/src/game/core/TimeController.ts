@@ -1,4 +1,4 @@
-export type RadialAction = "dig" | "build" | "cancel";
+export type RadialAction = "dig" | "spawn" | "cancel";
 
 export type TacticalPoint = {
   x: number;
@@ -112,7 +112,7 @@ export class TimeController {
     if (Math.hypot(dx, dy) < 24) return "cancel";
     const angle = Math.atan2(dy, dx);
     if (angle >= -Math.PI * 0.75 && angle < -Math.PI * 0.25) return "dig";
-    if (angle >= -Math.PI * 0.25 && angle < Math.PI * 0.25) return "build";
+    if (angle >= -Math.PI * 0.25 && angle < Math.PI * 0.25) return "spawn";
     return "cancel";
   }
 

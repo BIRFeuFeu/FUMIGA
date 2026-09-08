@@ -4,6 +4,7 @@ import { Engine } from "@babylonjs/core/Engines/engine";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 import { Scene } from "@babylonjs/core/scene";
+import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -13,7 +14,11 @@ import {
   emitFoundationStatus,
 } from "./core/GameState";
 import { CameraController } from "./core/CameraController";
+import { EconomyManager } from "./core/EconomyManager";
 import { TimeController, type RadialAction, type TacticalPoint } from "./core/TimeController";
+import { AStarGrid } from "./ai/AStarGrid";
+import { Queen } from "./entities/Queen";
+import { WorkerAnt } from "./entities/WorkerAnt";
 import { MapGenerator } from "./world/MapGenerator";
 
 export type GameHandle = {
@@ -64,14 +69,6 @@ function createEggs(scene: Scene, material: StandardMaterial) {
   return eggs;
 }
 
-function createWorker(scene: Scene, material: StandardMaterial) {
-  const worker = MeshBuilder.CreateSphere("worker-foundation", { diameter: 0.23, segments: 8 }, scene);
-  worker.position = new Vector3(-3.8, 0.24, 1.85);
-  worker.scaling = new Vector3(0.65, 0.72, 1.35);
-  worker.material = material;
-  return worker;
-}
-
 export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement): Promise<GameHandle> {
   const scene = new Scene(engine);
   scene.clearColor = new Color4(0.025, 0.02, 0.025, 1);
@@ -102,17 +99,16 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
   fill.diffuse = new Color3(0.4, 0.8, 0.28);
 
   const map = new MapGenerator(scene);
-  const queenMaterial = makeMaterial(scene, "queen-chitin", new Color3(0.22, 0.075, 0.045), new Color3(0.16, 0.035, 0.015));
   const eggMaterial = makeMaterial(scene, "queen-eggs", new Color3(0.85, 0.68, 0.38), new Color3(0.42, 0.2, 0.05));
-  const workerMaterial = makeMaterial(scene, "worker-chitin", new Color3(0.43, 0.21, 0.08), new Color3(0.12, 0.055, 0.015));
-  const queen = createQueen(scene, queenMaterial);
   const eggs = createEggs(scene, eggMaterial);
-  const worker = createWorker(scene, workerMaterial);
+  const economy = new EconomyManager();
+  const navigation = new AStarGrid(() => map.getMatrix());
+  const workers: WorkerAnt[] = [];
+  const queen = new Queen(scene, map, navigation, economy, (worker) => workers.push(worker), emitFoundationStatus);
 
   let isPaused = false;
   let elapsed = 0;
-  let pendingTacticalMesh: ReturnType<typeof scene.pick>["pickedMesh"] = null;
-  const initialWorkerPosition = worker.position.clone();
+  let pendingTacticalMesh: AbstractMesh | null = null;
   let timeController: TimeController;
 
   const cameraController = new CameraController(canvas, camera, () => !isPaused && !timeController.isTacticalActive);
@@ -136,8 +132,9 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
     if (action === "dig" && map.digMesh(pendingTacticalMesh)) {
       emitFoundationState({ tilesDug: map.walkableCount });
       emitFoundationStatus(`ORDEM CAVAR · ${map.walkableCount.toString().padStart(2, "0")} células abertas`, "success");
-    } else if (action === "build") {
-      emitFoundationStatus("ORDEM CONSTRUIR · salas entram na próxima fatia", "neutral");
+    } else if (action === "spawn") {
+      queen.requestWorker();
+      emitFoundationState({ biomass: economy.biomass });
     } else {
       emitFoundationStatus("ORDEM CANCELADA · mapa preservado", "neutral");
     }
@@ -153,10 +150,8 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
     if (isPaused) return;
     const delta = (engine.getDeltaTime() / 1000) * timeController.timeScale;
     elapsed += delta;
-    worker.position.x = initialWorkerPosition.x + Math.sin(elapsed * 0.8) * 0.45;
-    worker.position.z = initialWorkerPosition.z + Math.cos(elapsed * 0.8) * 0.22;
-    worker.rotation.y += delta * 0.75;
-    queen.scaling.y = 0.86 + Math.sin(elapsed * 1.4) * 0.035;
+    queen.update(delta);
+    workers.forEach((worker) => worker.update(delta));
     eggs.forEach((egg, index) => {
       egg.position.y = 0.19 + Math.sin(elapsed * 1.1 + index) * 0.018;
     });
@@ -194,6 +189,8 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
       scene.onPointerObservable.remove(pointerObserver);
       timeController.dispose();
       cameraController.dispose();
+      workers.forEach((worker) => worker.dispose());
+      queen.dispose();
       camera.detachControl();
       map.dispose();
       scene.dispose();
